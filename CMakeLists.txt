@@ -4,7 +4,7 @@ project(MixChecker VERSION 0.1.0 LANGUAGES C CXX OBJC OBJCXX)
 
 include(FetchContent)
 
-find_package(JUCE CONFIG QUIET)
+find_package(JUCE 9.0.3 EXACT CONFIG QUIET)
 
 if(NOT JUCE_FOUND)
     FetchContent_Declare(
@@ -21,7 +21,7 @@ juce_add_plugin(MixChecker
     BUNDLE_ID "com.mixchecker.plugin"
     PLUGIN_MANUFACTURER_CODE MxCk
     PLUGIN_CODE MxCh
-    FORMATS AU
+    FORMATS AU VST3
     PRODUCT_NAME "Mix Checker"
     IS_SYNTH FALSE
     NEEDS_MIDI_INPUT FALSE
@@ -29,6 +29,18 @@ juce_add_plugin(MixChecker
     IS_MIDI_EFFECT FALSE
     EDITOR_WANTS_KEYBOARD_FOCUS FALSE
     COPY_PLUGIN_AFTER_BUILD FALSE
+)
+
+juce_add_binary_data(MixCheckerUIAssets
+    SOURCES
+        Resources/HardwareUI/faceplate_3x.png
+        Resources/HardwareUI/mode_up_3x.png
+        Resources/HardwareUI/mode_down_3x.png
+        Resources/HardwareUI/bypass_up_3x.png
+        Resources/HardwareUI/bypass_down_3x.png
+        Resources/HardwareUI/lamp_off_3x.png
+        Resources/HardwareUI/lamp_on_3x.png
+        Resources/HardwareUI/screw_3x.png
 )
 
 target_sources(MixChecker
@@ -49,10 +61,12 @@ target_compile_definitions(MixChecker
     PUBLIC
         JUCE_WEB_BROWSER=0
         JUCE_USE_CURL=0
+        JUCE_VST3_CAN_REPLACE_VST2=0
 )
 
 target_link_libraries(MixChecker
     PRIVATE
+        MixCheckerUIAssets
         juce::juce_audio_processors
         juce::juce_dsp
     PUBLIC
@@ -65,6 +79,11 @@ if(APPLE)
     add_custom_command(TARGET MixChecker_AU POST_BUILD
         COMMAND /usr/bin/codesign --force --deep --sign - "$<TARGET_BUNDLE_DIR:MixChecker_AU>"
         COMMENT "Applying an ad-hoc signature to the Audio Unit bundle"
+    )
+
+    add_custom_command(TARGET MixChecker_VST3 POST_BUILD
+        COMMAND /usr/bin/codesign --force --deep --sign - "$<TARGET_BUNDLE_DIR:MixChecker_VST3>"
+        COMMENT "Applying an ad-hoc signature to the VST3 bundle"
     )
 endif()
 

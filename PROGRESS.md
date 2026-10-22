@@ -2,11 +2,11 @@
 
 ## Current Status
 
-Mix Checker v0.1 is complete and validated as a stereo Audio Unit in Logic Pro.
+Mix Checker v0.1 is complete. The stereo Audio Unit is validated in Logic Pro, and a signed arm64 VST3 build is now generated and accepted by the Cubase Pro 15 scanner.
 
 Current task:
 
-Task 12 — Final Logic Pro testing and v0.1 cleanup (completed)
+Post-v0.1 distribution preparation — add VST3 and rewrite the GitHub README (completed)
 
 ## Completed Tasks
 
@@ -33,7 +33,25 @@ None for v0.1.
 
 ## Current Problems
 
-None.
+No functional blocker. Full VST3 insert/editor/audio/state testing remains pending because this pass reached successful Cubase Pro 15 scanning but did not create a safe temporary host project. Public distribution also still needs a chosen repository license plus Developer ID signing/notarization or clear source-build-only positioning.
+
+## Compact UI Layout Reference
+
+All values are logical pixels in the fixed 474 x 208 editor, using top-left `(x, y)` coordinates.
+
+- Editor / embedded faceplate asset: `(0, 0, 474, 208)`; runtime PNG is `1422 x 624` (3x).
+- Main buttons: `62 x 60` at y `85`; x positions are `23, 96, 169, 242, 315, 388` for Phone, Laptop, Earbuds, Car, Club, and Mono.
+- Main button artwork: `186 x 180` (3x) for both up and down states. Text is drawn inside each complete `62 x 60` button rectangle, centred, 10 px Medium; selected/pressed text moves down 2 px.
+- Mode lamps: 11 px diameter, centred at `(54, 72)`, `(127, 72)`, `(200, 72)`, `(273, 72)`, `(346, 72)`, and `(419, 72)`.
+- Lamp artwork: `33 x 33` (3x) for both off and on states; ACTIVE reuses the same pair.
+- Bypass button: `(30, 160, 76, 24)` with `228 x 78` (3x) up/down artwork; text is centred at 10 px Medium. Its visible frame now clears both the divider and the silver panel's lower bevel.
+- Active lamp: 9 px diameter centred at `(420, 35)`; ACTIVE label is `(401, 40, 38, 10)`, directly below the lamp as one compact group.
+- Main title: `(34, 29, 300, 20)`, 17 px Regular with 0.10 extra kerning; its restrained highlight is offset to y `30`.
+- Subtitle: `(34, 50, 210, 10)`, 7.5 px Regular.
+- Stereo Monitoring label: `(304, 174, 134, 10)`, 7.5 px Regular, right-aligned with its right edge at x `438`.
+- Four screws: 7 px diameter centred at `(21, 29)`, `(453, 29)`, `(21, 181)`, and `(453, 181)`. All four reuse the same embedded `21 x 21` (3x) screw image and sit inside the silver inner panel rather than on the editor's outer boundary.
+- Horizontal divider is embedded once in the faceplate at logical y `157`; JUCE does not draw a duplicate line.
+- Outer enclosure, silver panel, bevels, and divider remain in the faceplate asset. The original baked screws were removed and the brushed metal was locally repaired before the shared screw asset was overlaid by JUCE.
 
 ## Notes
 
@@ -106,3 +124,38 @@ None.
 - Four human-paced editor close/reopen cycles during playback completed successfully after the state-restore reopen tests, with no plugin crash, audio dropout, or state loss. One synthetic no-delay accessibility automation loop made Logic's UI unresponsive; a host restart recovered the saved project, and the issue did not reproduce at normal interaction speed.
 - Final cleanup found no temporary source logging, debug switches, unused development helpers, or dead feature scaffolding to remove. No DSP, UI, or other product feature was added during Task 12.
 - Known v0.1 limitations: the device modes are intentionally broad checking approximations; mode gains are fixed rather than loudness-analyzed; the UI and smoothing time are fixed; and distribution packaging, installer, notarization, licensing, and v0.2 features remain out of scope.
+- The post-v0.1 silver-hardware UI polish changes only the editor and test expectations; AU-only output, all seven modes, DSP presets, fixed gains, 30 ms smoothing, and the `MixCheckerState` serialization format remain unchanged.
+- The fixed editor is now 820 x 360 logical pixels. Its six environment buttons are arranged in one row with separate lamp assemblies, Bypass is isolated at bottom left, ACTIVE is at top right, and STEREO MONITORING is at bottom right to match the approved reference composition.
+- The hardware surface is drawn with a graphite outer enclosure, layered metal bevels, corner screws, cached deterministic 2x brushed-aluminium texture, directional highlights, recessed button wells, textured button faces, contact shadows, metal lamp bezels, dark lenses, and amber glow. No reference image or machine-local asset path is used at runtime.
+- The cached texture is generated once when the editor is constructed and is never created in `paint()` or the audio callback. Labels remain JUCE-rendered text for Retina clarity.
+- The automated regression suite passes with the new 820 x 360 layout. A 1640 x 720 UI snapshot confirmed no visible clipping, stretching, seams, or out-of-bounds controls.
+- The Release AU built and passed strict `auval`, including the Cocoa editor and stereo multi-rate render tests. Logic Pro 11.2.2 loaded the installed AU, all seven controls remained mutually exclusive, mode/ACTIVE lamps followed Phone and Bypass correctly, editor close/reopen preserved synchronization, and a CAR save/quit/reopen test restored CAR before the validation project was saved back to Bypass.
+- Visual review still requested: the first version uses procedural aluminium and button texture rather than photographed/PBR texture maps, and the system font cannot exactly reproduce the reference lettering. Hover and mouse-down rendering paths are implemented, but an isolated held-mouse screenshot was not captured by the available UI automation.
+- No VST3 target, DSP change, state-format change, new control, meter, menu, or product feature was added.
+- The compact asset-preparation pass reduces the fixed editor from 820 x 360 to 474 x 208 without scaling the old component wholesale. Main controls use newly chosen 62 x 60 hit areas, 11 px gaps, 10 px mode labels, and a separate 76 x 26 Bypass hit area.
+- Both a native 474 x 208 snapshot and a 948 x 416 Retina snapshot confirm that all six mode names are complete and readable, button hit areas do not overlap, Bypass remains clear of the panel edge, and no text or hardware edge is clipped.
+- The new Release arm64 AU built successfully, the automated regression suite passed, and strict `auval` validation succeeded. Logic Pro 11.2.2 displayed the compact editor, all seven buttons remained mutually exclusive, and closing/reopening the editor restored synchronized Bypass state.
+- The validation project remains saved in Bypass. No DSP, gain, smoothing, state serialization, plugin-format, or VST3 change was made.
+- The supplied local design handoff masters (kept outside the Git repository) are now normalized into seven embedded 3x runtime PNGs: a 1422 x 624 faceplate, 186 x 180 mode up/down states, 228 x 78 Bypass up/down states, and 33 x 33 lamp off/on states. Raw masters remain unchanged locally.
+- The faceplate uses a two-segment vertical mapping so its supplied divider lands at logical y 159 without stretching the divider thickness across the whole panel. Each control pair uses one shared crop and canvas, keeping the outer frame, lamp ring, and label baseline fixed while state images change.
+- JUCE now draws the supplied faceplate, button, and lamp artwork from `juce_add_binary_data`; images decode once when the editor is created and are reused in paint. Only labels and the small hover overlay remain program-drawn.
+- Native Bypass and Car screenshots at 474 x 208 and Retina screenshots at 948 x 416 confirm readable labels, correct divider placement, fixed state geometry, no duplicated hardware borders, and the intended mode/ACTIVE lamp behavior.
+- On macOS 15.8.1 arm64, the Release AU built successfully, its automated regression suite passed, and strict `auval` succeeded including the Cocoa editor and stereo multi-rate render tests. Logic Pro 11.2.2 loaded the installed AU, all seven buttons remained mutually exclusive, and closing/reopening the editor restored synchronized Bypass state.
+- Embedded artwork increased the compressed AU executable from 10,905,728 to 12,194,704 bytes (+1,288,976 bytes, about 1.23 MiB); the component disk usage increased from 10,664 to 11,924 KiB. Final runtime PNGs total about 1.2 MiB on disk.
+- Hover and mouse-down code paths are present, but a held-mouse screenshot was not captured by the available UI automation. Final subjective review of the supplied generated texture and small-size typography remains a manual visual approval item.
+- This asset pass did not change DSP, gain compensation, smoothing, mode behavior, state serialization, or plugin formats; CMake still builds AU only and no VST3 target was added.
+- The follow-up layout polish moves the six `62 x 60` mode controls to y `85`, their lamps to y `72`, Bypass to `(30, 168, 76, 24)`, ACTIVE to `(427, 30)`, and all text to the compact coordinate reference above. Native and 2x snapshots show complete labels, aligned baselines, a fully visible Bypass control, and clear right-side screw spacing.
+- The four inconsistent faceplate screws were removed with deterministic masked same-surface repairs. A single extracted 3x screw asset is decoded with the other UI images and drawn unchanged at all four corners, so size, slot direction, and lighting are identical without double images or visible rectangular repair blocks.
+- Mode buttons no longer use JUCE's automatic toggle/radio-group behavior. Each click reads the processor's current mode: clicking the active Phone/Laptop/Earbuds/Car/Club/Mono mode requests Bypass, clicking another mode requests that mode, and Bypass always requests Bypass. `updateButtonStates()` still derives every visual state from the processor, preserving one source of truth and the existing serialized mode format.
+- Automated behavior coverage now verifies enter-and-repeat-to-Bypass for all six processed modes, direct Car-to-Phone switching, repeated Bypass clicks, exactly-one selection, external processor-to-editor synchronization, settled audio behavior, state restore, and the existing DSP regression suite.
+- The Release arm64 AU rebuilt successfully, the full automated test passed, and strict `auval` succeeded for the installed AUv2, including stereo 2-in/2-out, Cocoa editor, sliced rendering, and multi-rate rendering.
+- Logic Pro 11.2.2 loaded the newly installed AU and displayed the revised 474 x 208 editor without a crash. The available UI automation lost the plug-in floating-window focus after the first CAR interaction, so the complete six-mode repeat-click matrix was not independently re-verified inside Logic; it remains a manual host interaction check despite passing the processor/editor regression test.
+- No DSP preset, gain compensation, 30 ms smoothing, state serialization field, plugin format, or VST3 target changed in this polish pass.
+- The safe-area correction repositions the shared corner screws from the editor boundary to the silver inner panel, moves the title/subtitle below the upper bevel, groups the ACTIVE lamp and label more tightly while lowering them from the top edge, and raises Bypass above the lower bevel. Native and Retina Bypass/Car snapshots were regenerated and visually checked for clipping, overlap, and edge clearance.
+- This spacing correction changes only `PluginEditor.cpp` layout constants/draw coordinates and generated validation screenshots. DSP presets, gain compensation, smoothing, state serialization, mode behavior, assets, and the AU-only format remain unchanged.
+- The corrected Release arm64 AU rebuilt successfully, the full automated regression test passed, and the freshly installed component passed strict `auval`, including its Cocoa editor plus stereo sliced and multi-rate rendering. Logic Pro was not reopened for this coordinate-only correction.
+- GitHub preparation adds JUCE's VST3 target alongside the existing AU target. `JUCE_VST3_CAN_REPLACE_VST2=0` explicitly declares that Mix Checker has no legacy VST2 release to replace, avoiding JUCE's automation-ID compatibility guard without changing any current parameter or state identity.
+- Release builds now produce both `Mix Checker.component` and `Mix Checker.vst3`; both bundles receive a final ad-hoc macOS signature. The VST3 binary is arm64, its `Info.plist` and generated `moduleinfo.json` are present, and `codesign --verify --deep --strict` passes.
+- The freshly installed VST3 was scanned by Cubase Pro 15. Its scanner log reports `Scanning: Mix Checker OK (381 ms)`, and the Cubase cache records the expected v0.1.0 `Fx` audio-module and controller classes. A full VST3 insert/editor/audio/state test was not completed and remains explicitly documented as pending.
+- The complete automated regression test still passes after enabling VST3. The freshly rebuilt and installed AU also passes strict `auval`, including its Cocoa editor and stereo sliced/multi-rate rendering; the existing Logic Pro 11.2.2 result remains the host reference validation.
+- `README.md` is rewritten for GitHub with the current silver-hardware screenshot, AU/VST3 build and installation instructions, truthful validation boundaries, mode descriptions, architecture notes, and known limitations. The old UI screenshot was replaced by an optimized 948 x 416 capture of the current Car-active interface.

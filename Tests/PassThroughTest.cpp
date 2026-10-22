@@ -661,11 +661,11 @@ int main()
     std::unique_ptr<juce::AudioProcessorEditor> editor (uiProcessor.createEditor());
 
     if (editor == nullptr
-        || editor->getWidth() != 560
-        || editor->getHeight() != 260
+        || editor->getWidth() != 474
+        || editor->getHeight() != 208
         || editor->isResizable())
     {
-        std::cerr << "Expected a fixed 560 x 260 custom editor.\n";
+        std::cerr << "Expected a fixed 474 x 208 custom editor.\n";
         return 1;
     }
 
@@ -723,6 +723,60 @@ int main()
         return 1;
     }
 
+    for (const auto& expectation : buttonExpectations)
+    {
+        if (expectation.mode == Mode::bypass)
+            continue;
+
+        auto* button = dynamic_cast<juce::TextButton*> (
+            editor->findChildWithID (expectation.componentId));
+
+        uiProcessor.setMode (Mode::bypass);
+        button->onClick();
+
+        if (uiProcessor.getMode() != expectation.mode
+            || ! button->getToggleState()
+            || countSelectedButtons() != 1)
+        {
+            std::cerr << "A mode button did not enter its mode from Bypass.\n";
+            return 1;
+        }
+
+        button->onClick();
+
+        if (uiProcessor.getMode() != Mode::bypass
+            || ! bypassButton->getToggleState()
+            || countSelectedButtons() != 1)
+        {
+            std::cerr << "Clicking the active mode did not return to Bypass.\n";
+            return 1;
+        }
+    }
+
+    auto* carButton = dynamic_cast<juce::TextButton*> (editor->findChildWithID ("car"));
+    auto* phoneButton = dynamic_cast<juce::TextButton*> (editor->findChildWithID ("phone"));
+    carButton->onClick();
+    phoneButton->onClick();
+
+    if (uiProcessor.getMode() != Mode::phone
+        || ! phoneButton->getToggleState()
+        || countSelectedButtons() != 1)
+    {
+        std::cerr << "Switching directly between two modes did not select the target mode.\n";
+        return 1;
+    }
+
+    bypassButton->onClick();
+    bypassButton->onClick();
+
+    if (uiProcessor.getMode() != Mode::bypass
+        || ! bypassButton->getToggleState()
+        || countSelectedButtons() != 1)
+    {
+        std::cerr << "Repeated Bypass clicks did not remain in Bypass.\n";
+        return 1;
+    }
+
     juce::AudioBuffer<float> uiInput (2, 512);
 
     for (int sample = 0; sample < uiInput.getNumSamples(); ++sample)
@@ -776,8 +830,6 @@ int main()
     std::this_thread::sleep_for (std::chrono::milliseconds (40));
     juce::Timer::callPendingTimersSynchronously();
 
-    auto* phoneButton = dynamic_cast<juce::TextButton*> (editor->findChildWithID ("phone"));
-
     if (phoneButton == nullptr || ! phoneButton->getToggleState() || countSelectedButtons() != 1)
     {
         std::cerr << "The editor did not follow an external processor mode change.\n";
@@ -792,6 +844,50 @@ int main()
     {
         std::cerr << "The editor did not resynchronise to Bypass.\n";
         return 1;
+    }
+
+    const auto bypassSnapshotPath1x = juce::SystemStats::getEnvironmentVariable (
+        "MIXCHECKER_UI_BYPASS_SNAPSHOT_1X", {});
+    const auto bypassSnapshotPath2x = juce::SystemStats::getEnvironmentVariable (
+        "MIXCHECKER_UI_BYPASS_SNAPSHOT_2X", {});
+    const auto carSnapshotPath1x = juce::SystemStats::getEnvironmentVariable (
+        "MIXCHECKER_UI_CAR_SNAPSHOT_1X", {});
+    const auto carSnapshotPath2x = juce::SystemStats::getEnvironmentVariable (
+        "MIXCHECKER_UI_CAR_SNAPSHOT_2X", {});
+
+    if (bypassSnapshotPath1x.isNotEmpty() || bypassSnapshotPath2x.isNotEmpty()
+        || carSnapshotPath1x.isNotEmpty() || carSnapshotPath2x.isNotEmpty())
+    {
+        const auto writeSnapshot = [&editor] (const juce::String& path, float scale)
+        {
+            if (path.isEmpty())
+                return true;
+
+            const auto snapshot = editor->createComponentSnapshot (
+                editor->getLocalBounds(), true, scale);
+            auto output = juce::File (path).createOutputStream();
+            return ! snapshot.isNull()
+                && output != nullptr
+                && juce::PNGImageFormat().writeImageToStream (snapshot, *output);
+        };
+
+        if (! writeSnapshot (bypassSnapshotPath1x, 1.0f)
+            || ! writeSnapshot (bypassSnapshotPath2x, 2.0f))
+        {
+            std::cerr << "Could not render the requested Bypass UI snapshot.\n";
+            return 1;
+        }
+
+        uiProcessor.setMode (Mode::car);
+        std::this_thread::sleep_for (std::chrono::milliseconds (40));
+        juce::Timer::callPendingTimersSynchronously();
+
+        if (! writeSnapshot (carSnapshotPath1x, 1.0f)
+            || ! writeSnapshot (carSnapshotPath2x, 2.0f))
+        {
+            std::cerr << "Could not render the requested Car UI snapshot.\n";
+            return 1;
+        }
     }
 
     uiProcessor.releaseResources();

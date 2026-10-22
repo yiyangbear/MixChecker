@@ -7,6 +7,11 @@
 class MixCheckerLookAndFeel final : public juce::LookAndFeel_V4
 {
 public:
+    MixCheckerLookAndFeel (juce::Image modeUpImage,
+                           juce::Image modeDownImage,
+                           juce::Image bypassUpImage,
+                           juce::Image bypassDownImage);
+
     void drawButtonBackground (juce::Graphics& graphics,
                                juce::Button& button,
                                const juce::Colour& backgroundColour,
@@ -17,6 +22,12 @@ public:
                          juce::TextButton& button,
                          bool isMouseOverButton,
                          bool isButtonDown) override;
+
+private:
+    juce::Image modeUp;
+    juce::Image modeDown;
+    juce::Image bypassUp;
+    juce::Image bypassDown;
 };
 
 class MixCheckerAudioProcessorEditor final : public juce::AudioProcessorEditor,
@@ -36,7 +47,21 @@ private:
                           MixCheckerAudioProcessor::Mode mode);
     void updateButtonStates();
 
+    void drawIndicator (juce::Graphics& graphics,
+                        juce::Point<float> centre,
+                        bool isLit,
+                        float diameter) const;
+    void drawScrew (juce::Graphics& graphics, juce::Point<float> centre) const;
+
     MixCheckerAudioProcessor& audioProcessor;
+    juce::Image faceplate;
+    juce::Image modeUp;
+    juce::Image modeDown;
+    juce::Image bypassUp;
+    juce::Image bypassDown;
+    juce::Image lampOff;
+    juce::Image lampOn;
+    juce::Image screw;
     MixCheckerLookAndFeel lookAndFeel;
     MixCheckerAudioProcessor::Mode displayedMode { MixCheckerAudioProcessor::Mode::bypass };
 

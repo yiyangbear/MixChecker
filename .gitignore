@@ -1,3 +1,10 @@
 /build/
 /cmake-build-*/
 .DS_Store
+
+# Local UI regression captures. The README uses docs/mix-checker.png instead.
+/MixChecker-Hardware-UI-*.png
+/MixChecker-UI-Preview*.png
+
+# Raw design handoff and internal working notes are not required at runtime.
+/design/
